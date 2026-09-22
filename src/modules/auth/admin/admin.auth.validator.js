@@ -30,7 +30,7 @@ export const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Reset token is required'),
   newPassword: z
     .string()
-    .min(12, 'Password must be at least 12 characters')
+    .min(8, 'Password must be at least 8 characters')
     .max(128, 'Password too long')
     .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Must contain at least one lowercase letter')

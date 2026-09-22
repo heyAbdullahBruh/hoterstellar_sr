@@ -3,10 +3,22 @@ import { validationResult } from 'express-validator';
 import { ValidationError } from '../errors/ValidationError.js';
 
 /**
- * Validates request body against a Zod schema
- * @param {import('zod').ZodSchema} schema - Zod schema to validate against
- * @returns {Function} Express middleware
+ * Extract field-level details from a Zod error.
+ * Zod v4 uses `.issues` (v3 used `.errors`).
+ * Support both for safety during migrations.
  */
+const extractZodDetails = (error) => {
+  const issues = error.issues || error.errors || [];
+
+  return issues.map((issue) => ({
+    field: Array.isArray(issue.path)
+      ? issue.path.join('.')
+      : String(issue.path || ''),
+    message: issue.message,
+    code: issue.code,
+  }));
+};
+
 export const validateBody = (schema) => {
   return (req, res, next) => {
     try {
@@ -15,11 +27,9 @@ export const validateBody = (schema) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const details = error.errors.map((err) => ({
-          field: err.path.join('.'),
-          message: err.message,
-        }));
-        next(new ValidationError('Validation failed', details));
+        next(
+          new ValidationError('Validation failed', extractZodDetails(error)),
+        );
       } else {
         next(error);
       }
@@ -27,11 +37,6 @@ export const validateBody = (schema) => {
   };
 };
 
-/**
- * Validates request query parameters against a Zod schema
- * @param {import('zod').ZodSchema} schema - Zod schema to validate against
- * @returns {Function} Express middleware
- */
 export const validateQuery = (schema) => {
   return (req, res, next) => {
     try {
@@ -40,11 +45,12 @@ export const validateQuery = (schema) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const details = error.errors.map((err) => ({
-          field: err.path.join('.'),
-          message: err.message,
-        }));
-        next(new ValidationError('Query validation failed', details));
+        next(
+          new ValidationError(
+            'Query validation failed',
+            extractZodDetails(error),
+          ),
+        );
       } else {
         next(error);
       }
@@ -52,11 +58,6 @@ export const validateQuery = (schema) => {
   };
 };
 
-/**
- * Validates request params against a Zod schema
- * @param {import('zod').ZodSchema} schema - Zod schema to validate against
- * @returns {Function} Express middleware
- */
 export const validateParams = (schema) => {
   return (req, res, next) => {
     try {
@@ -65,11 +66,12 @@ export const validateParams = (schema) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const details = error.errors.map((err) => ({
-          field: err.path.join('.'),
-          message: err.message,
-        }));
-        next(new ValidationError('Params validation failed', details));
+        next(
+          new ValidationError(
+            'Params validation failed',
+            extractZodDetails(error),
+          ),
+        );
       } else {
         next(error);
       }
@@ -77,10 +79,6 @@ export const validateParams = (schema) => {
   };
 };
 
-/**
- * Runs express-validator validation and throws error if invalid
- * @returns {Function} Express middleware
- */
 export const runExpressValidation = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

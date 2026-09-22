@@ -339,10 +339,17 @@ export const requestPasswordReset = async (email, requestMeta = {}) => {
         supportEmail: SUPPORT_EMAIL,
       });
 
-      await brevoClient.sendEmail({
+      const result = await brevoClient.sendEmail({
         to: admin.email,
         subject: 'Reset Your Hoterstellar Admin Password',
         html,
+        text: `Reset your Hoterstellar Admin password by visiting: ${resetUrl}\n\nThis link expires in ${RESET_TOKEN_EXPIRY_MINUTES} minutes and can only be used once.\n\nIf you did not request this, ignore this email.`,
+      });
+
+      console.log('Password reset email sent', {
+        adminId: admin._id,
+        email: admin.email,
+        result,
       });
 
       logger.info('Password reset email sent', {
@@ -350,6 +357,9 @@ export const requestPasswordReset = async (email, requestMeta = {}) => {
         email: admin.email,
       });
     } catch (error) {
+      console.log('Failed to send password reset email', {
+        error: error.message,
+      });
       logger.error('Failed to send password reset email', {
         adminId: admin._id,
         error: error.message,

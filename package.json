@@ -11,6 +11,7 @@
     "worker": "node worker.js",
     "start": "node server.js",
     "seed": "node src/scripts/seed.js",
+    "test:email": "node src/scripts/test-brevo-email.js",
     "lint": "eslint . --config eslint.config.mjs",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"server.js\" \"worker.js\""
