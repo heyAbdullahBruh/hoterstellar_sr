@@ -19,6 +19,7 @@ import { SOCKET_EVENTS } from '../../../constants/socketEvents.js';
 import { AdminPasswordReset } from './adminPasswordReset.model.js';
 import { adminPasswordResetTemplate } from '../../../emails/templates/adminPasswordResetTemplate.js';
 import { adminWelcomeTemplate } from '../../../emails/templates/adminWelcomeTemplate.js';
+import { AuthorizationError } from '../../../errors/AuthorizationError.js';
 
 const TEMP_PASSWORD_EXPIRY_HOURS = 72;
 const RESET_TOKEN_EXPIRY_MINUTES = 60;
@@ -32,7 +33,7 @@ export const adminLogin = async ({ email, password, deviceInfo }) => {
   }
 
   if (!admin.isActive) {
-    throw new AuthenticationError('Account is deactivated');
+    throw new AuthorizationError('Account is deactivated');
   }
 
   const isPasswordValid = await admin.comparePassword(password);

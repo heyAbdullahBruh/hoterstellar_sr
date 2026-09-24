@@ -5,7 +5,6 @@ import { ValidationError } from '../errors/ValidationError.js';
 /**
  * Extract field-level details from a Zod error.
  * Zod v4 uses `.issues` (v3 used `.errors`).
- * Support both for safety during migrations.
  */
 const extractZodDetails = (error) => {
   const issues = error.issues || error.errors || [];
@@ -19,11 +18,32 @@ const extractZodDetails = (error) => {
   }));
 };
 
+/**
+ * Express 5 made req.query, req.params (and req.body in some cases)
+ * getter-only. This helper mutates the object in place so we don't
+ * trigger "Cannot set property X which has only a getter".
+ */
+const mutateInPlace = (target, source) => {
+  if (
+    !target ||
+    typeof target !== 'object' ||
+    !source ||
+    typeof source !== 'object'
+  ) {
+    return;
+  }
+
+  for (const key of Object.keys(target)) {
+    delete target[key];
+  }
+  Object.assign(target, source);
+};
+
 export const validateBody = (schema) => {
   return (req, res, next) => {
     try {
       const parsed = schema.parse(req.body);
-      req.body = parsed;
+      req.body = parsed; // body is still writable in Express 5
       next();
     } catch (error) {
       if (error instanceof ZodError) {
@@ -41,7 +61,7 @@ export const validateQuery = (schema) => {
   return (req, res, next) => {
     try {
       const parsed = schema.parse(req.query);
-      req.query = parsed;
+      mutateInPlace(req.query, parsed); // ✅ Express 5 safe
       next();
     } catch (error) {
       if (error instanceof ZodError) {
@@ -62,7 +82,7 @@ export const validateParams = (schema) => {
   return (req, res, next) => {
     try {
       const parsed = schema.parse(req.params);
-      req.params = parsed;
+      mutateInPlace(req.params, parsed); // ✅ Express 5 safe
       next();
     } catch (error) {
       if (error instanceof ZodError) {
