@@ -61,6 +61,13 @@ export const createFood = async (foodData, imageFiles) => {
 
   logger.info('Food created', { foodId: food._id });
 
+  emitAdminEvent(SOCKET_EVENTS.FOOD_CREATED, {
+    foodId: food._id,
+    name: food.name,
+    slug: food.slug,
+    price: food.price,
+  });
+
   return food;
 };
 
@@ -131,13 +138,6 @@ export const listFoods = async (query) => {
 
   trackedFoodCacheKeys.add(cacheKey);
   await setCache(cacheKey, data, 60);
-
-  emitAdminEvent(SOCKET_EVENTS.FOOD_CREATED, {
-    foodId: food._id,
-    name: food.name,
-    slug: food.slug,
-    price: food.price,
-  });
 
   return data;
 };
